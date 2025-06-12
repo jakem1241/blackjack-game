@@ -24,8 +24,9 @@ This is a single-player Blackjack game written in Java, featuring unique gamepla
    git clone https://github.com/jakem1241/blackjack-game.git
    cd blackjack-game
 2. Compile and run:
-javac src/Main.java
-java -cp src Main
+   ```bash
+   javac src/Main.java
+   java -cp src Main
 Or run directly in an IDE.
 
 Created by Charles (Jake) Matthews
