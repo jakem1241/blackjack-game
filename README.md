@@ -5,9 +5,9 @@ This is a single-player Blackjack game written in Java, featuring unique gamepla
 ## Features
 
 - Standard Blackjack gameplay (hit, stand, bust, NO PUSH)
-- Custom Power-Up system with unique effects (e.g., All or Nothing, Reveal Card, Extra Life)
+- Custom Power-Up system with unique effects (e.g., All or Nothing, Pick Two, Double Jeopardy)
 - Vault system that persists player progress across rounds
-- Object-oriented design with classes like GameContext, RoundContext, Deck, and PowerUp
+- Object-oriented design with classes like GameContext, RoundContext, Card, and PowerUp
 - Console-based UI with clear round flow and player prompts
 
 ## Technical Details
@@ -26,6 +26,6 @@ This is a single-player Blackjack game written in Java, featuring unique gamepla
 2. Compile and run:
 javac src/Main.java
 java -cp src Main
-Or run directly in an IDE like VS Code or IntelliJ.
+Or run directly in an IDE.
 
 Created by Charles (Jake) Matthews
