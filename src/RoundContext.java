@@ -46,4 +46,32 @@ public class RoundContext {
 
     public boolean isDJused() { return usedDJ; }
     public void useDJ() { usedDJ = true; }
+
+
+    /*  CHANGES FROM REFACTORING   */
+
+
+    public void drawPlayer() { playerHand.addCard(deck.draw()); }
+    public void drawHouse() { houseHand.addCard(deck.draw()); }
+
+    public void startRoundLogic(int wager, int playerLives) {
+        if (wager == -1) { setWager(playerLives); } 
+        else { setWager(wager); }
+    }
+
+    private boolean playerActive = true, houseActive = true;
+
+    public void checkBusts() {
+        if (playerHand.getTotalValue() > pointGoal) playerActive = false;
+        if (houseHand.getTotalValue() > pointGoal) houseActive = false;
+    }
+
+    public boolean shouldHouseDraw(int houseGoal) {
+        return houseHand.getTotalValue() < houseGoal;
+    }
+
+    public boolean isPlayerActive() { return playerActive; }
+    public boolean isHouseActive() { return houseActive; }
+    public void setPlayerActive(boolean b) { playerActive = b; }
+    public void setHouseActive(boolean b) { houseActive = b; }
 }

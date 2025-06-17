@@ -3,7 +3,6 @@ public class RoundEnvironment {
     private GameContext gtx;
     private RoundContext rtx;
     private Hand playerHand, houseHand;
-    private boolean playerActive = true, houseActive = true;
     private int housePointGoal;
 
     public RoundEnvironment(GameContext gtx) {
@@ -13,19 +12,17 @@ public class RoundEnvironment {
         this.houseHand = rtx.getHouseHand();
     }
 
-    public void startRound(int wager) {
-
-        //AON special case
+   public void startRound(int wager) {
         if (wager == -1) {
             System.out.println("Starting All or Nothing round! You wagered " + gtx.getLives() + " lives.");
             System.out.println("No power-ups will be available to use.");
-        }
-
-        else {
-            rtx.setWager(wager);
+        } else {
             System.out.println("\nNew round started! You wagered $" + wager + ".");
         }
+        // Update the game state after printing
+        rtx.startRoundLogic(wager, gtx.getLives());
     }
+
 
     public int playRound(boolean isFirstDraw) {
 
@@ -35,87 +32,77 @@ public class RoundEnvironment {
 
         if (!isFirstDraw) {
             //Check if player busts
-            if (checkBust(playerHand)) {
-                playerActive = false;
-            }
+            rtx.checkBusts();  //moves logic to RoundContext
 
-            //Check if house busts
-            if (checkBust(houseHand)) {
-                houseActive = false;
-            }
+            //Check if house busts — also handled in checkBusts()
 
             //Ask player if they want to stop
-            if (playerActive) {
+            if (rtx.isPlayerActive()) {
                 int res = InputHelper.getValidatedInput(
                     gtx.getScanner(), 0, 1,
                     "Do you want to keep drawing cards? 1 to continue, 0 to stop: ",
                     "Enter only 1 or 0 to continue or stop."
                 );
                 if (res == 0) {
-                    playerActive = false;
+                    rtx.setPlayerActive(false);
                 }
             }
 
             //Base Case: If both done, determine winner
-            if (!playerActive && !houseActive) {
-                return determineWinner(playerHand, houseHand);
+            if (!rtx.isPlayerActive() && !rtx.isHouseActive()) {
+                return determineWinner(rtx.getPlayerHand(), rtx.getHouseHand());
             }
         }
 
         /*     TURN    */
 
-
-        if (playerActive) {
+        if (rtx.isPlayerActive()) {
 
             // 1. Increment power-up points, draw powerups
             gtx.drawPowerUps();
 
-            if(isFirstDraw) {
+            if (isFirstDraw) {
                 gtx.drawPowerUps();
-            }
-            else {
+            } else {
                 gtx.incrementPwrUpPts();
 
                 // 2. Play powerups before the draw
-                //DELETED
+                // DELETED
             }
 
             // 3. Player draws
-            if (playerActive) {
-                drawPlayer();
-                if(rtx.isAONused()) {
-                    System.out.println("\n--------------------------------------------------------------------------------------------------\n");
-                    Hand.printBothHands(playerHand, houseHand, houseActive, 21);
-                }
-            }
-            else {
+            rtx.drawPlayer();
+            if (rtx.isAONused()) {
                 System.out.println("\n--------------------------------------------------------------------------------------------------\n");
-                System.out.println("The player has stopped drawing cards and playing powerups.");
+                Hand.printBothHands(rtx.getPlayerHand(), rtx.getHouseHand(), rtx.isHouseActive(), 21);
             }
+
+        } else {
+            System.out.println("\n--------------------------------------------------------------------------------------------------\n");
+            System.out.println("The player has stopped drawing cards and playing powerups.");
         }
 
         // 4. If house will play, draw 
-        if (houseHand.getTotalValue() < housePointGoal) {
-            houseActive = true;
-            drawHouse();
-            if (!playerActive) {
+        if (rtx.shouldHouseDraw(housePointGoal)) {
+            rtx.setHouseActive(true);
+            rtx.drawHouse();
+            if (!rtx.isPlayerActive()) {
                 System.out.println();
-                Hand.printBothHands(playerHand, houseHand, houseActive, housePointGoal);
+                Hand.printBothHands(rtx.getPlayerHand(), rtx.getHouseHand(), true, housePointGoal);
             }
-        }
-        else {
-            houseActive = false;
+        } else {
+            rtx.setHouseActive(false);
         }
 
         // 5. Play powerups after the draw
-        if (playerActive && !rtx.isAONused()) {
+        if (rtx.isPlayerActive() && !rtx.isAONused()) {
             playPowerUpsPhase(housePointGoal);
         }
-        
 
         // 6. Recursively play next round
         return playRound(false);
     }
+
 
 
 
@@ -129,7 +116,7 @@ public class RoundEnvironment {
 
             //Show hands, available power-ups, power-up points
             System.out.println();
-            Hand.printBothHands(playerHand, houseHand, houseActive, housePointGoal);
+            Hand.printBothHands(playerHand, houseHand, rtx.isHouseActive(), housePointGoal);
             gtx.printPwrUps();
 
             choice = InputHelper.getValidatedInput(gtx.getScanner(), 0, gtx.powerUps.size(), 
@@ -193,10 +180,4 @@ public class RoundEnvironment {
             return -1;
         }
     }
-
-
-
-    private boolean checkBust(Hand h) { return (h.getTotalValue() > rtx.getPointGoal()); }
-    private void drawPlayer() { playerHand.addCard(rtx.getDeck().draw()); }
-    private void drawHouse() { houseHand.addCard(rtx.getDeck().draw()); }
 }

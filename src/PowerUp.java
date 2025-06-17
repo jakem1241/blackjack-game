@@ -241,7 +241,7 @@ public enum PowerUp {
             }
 
             Random random = gtx.getRandom();
-            int newVal = random.nextInt(originalValue-2)+1;
+            int newVal = random.nextInt(originalValue-1)+1;
             c.setValue(newVal);
             System.out.println("Slashed " + c + "'s value from " + originalValue + " to " + newVal + ".");
         }
@@ -607,7 +607,7 @@ public enum PowerUp {
         @Override
         public void apply(GameContext gtx) {
             rtx(gtx).setWager(rtx(gtx).getWager() + WAGER_BOOST);
-            System.out.println("Wager boosted by $" + WAGER_BOOST + ". Your wager is now " + rtx(gtx).getWager() +".");
+            System.out.println("Wager boosted by $" + WAGER_BOOST + ". Your wager is now $" + rtx(gtx).getWager() +".");
         }
 
         @Override
@@ -638,8 +638,6 @@ public enum PowerUp {
         public void apply(GameContext gtx) {
             RoundContext rtx = rtx(gtx);
             rtx.useAON();
-
-            System.out.println("All or Nothing activated! You're wagering all " + gtx.getLives() + " lives. If you win, you’ll double them. If you lose... it's game over.");
         }
 
         @Override
@@ -701,9 +699,9 @@ reset_powerups("Reset Powerups", "Trash all powerups, inlcuding this one; gain p
 
 
     //Helper methods to cleanly access deck, hand
-    protected RoundContext rtx(GameContext gtx) { return gtx.getRoundContext(); }
-    protected Deck deck(GameContext gtx) { return rtx(gtx).getDeck(); }
-    protected Hand hand(GameContext gtx) { return rtx(gtx).getPlayerHand(); }
+    private static RoundContext rtx(GameContext gtx) { return gtx.getRoundContext(); }
+    private static Deck deck(GameContext gtx) { return rtx(gtx).getDeck(); }
+    private static Hand hand(GameContext gtx) { return rtx(gtx).getPlayerHand(); }
 
 
     /*  Rarity Handling  */

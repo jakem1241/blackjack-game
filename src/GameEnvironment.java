@@ -1,6 +1,6 @@
 import java.util.Scanner;
 
-public class blackjackRunner {
+public class GameEnvironment {
 
     public static void main(String[] args) {
 
@@ -36,6 +36,12 @@ public class blackjackRunner {
             }
             if (res == 1) {
                     wager = -1;
+
+                    //Play power-up
+                    PowerUp p = PowerUp.all_or_nothing;
+                    p.apply(gtx);
+                    gtx.powerUps.remove(p);
+                    gtx.setPwrUpPts(gtx.getPwrUpPts() - p.getCost());
 
                     //Play round
                     renv.startRound(wager);
