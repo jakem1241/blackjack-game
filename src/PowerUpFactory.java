@@ -17,11 +17,9 @@ public class PowerUpFactory {
 
     public static PowerUp getRandomPowerUp(GameContext gtx) {
         PowerUp p = powerWeightedList.get(random.nextInt(powerWeightedList.size())); 
-        while (!p.isValid(gtx))
+        while (!p.isValid(gtx)) {
             p = powerWeightedList.get(random.nextInt(powerWeightedList.size()));
-
-            if (p.equals(PowerUp.all_or_nothing))
-                gtx.obtainAON();
+        }
         return p;
     }
 

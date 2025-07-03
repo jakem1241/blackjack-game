@@ -4,10 +4,10 @@ import java.util.Collections;
 public class Deck {
 
     final int INIT_SIZE = 52;
-    private ArrayList<Card> arr;
+    private ArrayList<Card> deck;
 
     public Deck() {
-        this.arr = initDeck();
+        this.deck = initDeck();
     }
 
     public ArrayList<Card> initDeck() {
@@ -23,30 +23,23 @@ public class Deck {
     public Card draw() {
         if (isEmpty()) return null;
         Card c = peek();
-        arr.remove(0);
+        deck.remove(0);
         return c;
     }
     public Card peek() {
         if (isEmpty()) return null;
-        return arr.get(0);
+        return deck.get(0);
     }
     public Card peekAtIndex(int x) {
         if (x > size()-1) return null;
-        return arr.get(x); 
+        return deck.get(x); 
     }
 
-    public boolean removeCard(Card c) { return arr.remove(c); }
-    public void addToTop(Card c) { arr.add(0, c); }
-    public void addToIndex(Card c, int x) { arr.add(x, c); }
-    public void shuffle() { Collections.shuffle(arr); }
+    public boolean removeCard(Card c) { return deck.remove(c); }
+    public void addToTop(Card c) { deck.add(0, c); }
+    public void addToIndex(Card c, int x) { deck.add(x, c); }
+    public void shuffle() { Collections.shuffle(deck); }
 
-    public int size() { return arr.size(); }
-    public boolean isEmpty() { return arr.isEmpty(); }
-    public void reset() { arr = initDeck(); }
-
-    public void printDeck() {
-        for (Card c : arr) { System.out.println(c.toString()); }
-    }
-
-
+    public int size() { return deck.size(); }
+    public boolean isEmpty() { return deck.isEmpty(); }
 }

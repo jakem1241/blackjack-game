@@ -31,6 +31,6 @@ public class Card {
     public Rank getRank() { return rank; }
     public void setSuit(Suit s) { suit = s; }
     public Suit getSuit() { return suit; }
-    public boolean isFaceCard() { return (rank.getRankValue() == 10 && rank != Rank.TEN); }
+    
     public String toString() { return String.format("%s of %s (%d)", rank, suit, value); }
 }

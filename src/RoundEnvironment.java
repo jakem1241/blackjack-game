@@ -1,15 +1,16 @@
 public class RoundEnvironment {
 
+     private static final int HOUSE_DRAW_MARGIN = 4;
+     
     private GameContext gtx;
     private RoundContext rtx;
-    private Hand playerHand, houseHand;
+    private GameEnvironment genv;
     private int housePointGoal;
 
     public RoundEnvironment(GameContext gtx) {
         this.gtx = gtx;
         this.rtx = this.gtx.getRoundContext();
-        this.playerHand = rtx.getPlayerHand();
-        this.houseHand = rtx.getHouseHand();
+        this.genv = this.gtx.getGameEnvironment();
     }
 
    public void startRound(int wager) {
@@ -28,13 +29,12 @@ public class RoundEnvironment {
 
         /*   PRE-TURN   */
 
-        housePointGoal = rtx.getPointGoal() - 4;
+        housePointGoal = rtx.getPointGoal() - HOUSE_DRAW_MARGIN;
 
         if (!isFirstDraw) {
-            //Check if player busts
-            rtx.checkBusts();  //moves logic to RoundContext
-
-            //Check if house busts — also handled in checkBusts()
+            
+            //Check if player, house busts
+            rtx.checkBusts(); 
 
             //Ask player if they want to stop
             if (rtx.isPlayerActive()) {
@@ -50,7 +50,7 @@ public class RoundEnvironment {
 
             //Base Case: If both done, determine winner
             if (!rtx.isPlayerActive() && !rtx.isHouseActive()) {
-                return determineWinner(rtx.getPlayerHand(), rtx.getHouseHand());
+                return determineWinner();
             }
         }
 
@@ -64,7 +64,7 @@ public class RoundEnvironment {
             if (isFirstDraw) {
                 gtx.drawPowerUps();
             } else {
-                gtx.incrementPwrUpPts();
+                gtx.incrementPowerUpPts();
 
                 // 2. Play powerups before the draw
                 // DELETED
@@ -74,7 +74,7 @@ public class RoundEnvironment {
             rtx.drawPlayer();
             if (rtx.isAONused()) {
                 System.out.println("\n--------------------------------------------------------------------------------------------------\n");
-                Hand.printBothHands(rtx.getPlayerHand(), rtx.getHouseHand(), rtx.isHouseActive(), 21);
+                printBothHands(21);
             }
 
         } else {
@@ -88,15 +88,17 @@ public class RoundEnvironment {
             rtx.drawHouse();
             if (!rtx.isPlayerActive()) {
                 System.out.println();
-                Hand.printBothHands(rtx.getPlayerHand(), rtx.getHouseHand(), true, housePointGoal);
+                printBothHands(housePointGoal);
             }
         } else {
             rtx.setHouseActive(false);
         }
 
-        // 5. Play powerups after the draw
-        if (rtx.isPlayerActive() && !rtx.isAONused()) {
-            playPowerUpsPhase(housePointGoal);
+         // 5. Play powerups after the draw if house doesn't bust
+        if (rtx.checkPlayerBust() || !rtx.checkHouseBust()) {
+            if (rtx.isPlayerActive() && !rtx.isAONused()) {
+                playPowerUpsPhase(housePointGoal);
+            }
         }
 
         // 6. Recursively play next round
@@ -105,79 +107,90 @@ public class RoundEnvironment {
 
 
 
+    private void printBothHands(int housePointGoal) {
+        System.out.println("--------------------------------------------------------------------------------------------------\n");
+
+        if (!rtx.isHouseActive()) {
+            System.out.println("The house stands as the value of their hand has reached " + housePointGoal + " or higher.\n");
+        }
+
+        Hand playerHand = rtx.getPlayerHand();
+        Hand houseHand = rtx.getHouseHand();
+
+        System.out.println("Player Hand:\t\t\t\tHouse Hand:");
+
+        int maxSize = Math.max(playerHand.size(), houseHand.size());
+        for (int i = 0; i < maxSize; i++) {
+            String playerCard = i < playerHand.size() ? (i + 1) + ") " + playerHand.getCard(i).toString() : "";
+            String houseCard = i < houseHand.size() ? (i + 1) + ") " + houseHand.getCard(i).toString() : "";
+
+            System.out.printf("%-40s%s%n", playerCard, houseCard);
+        }
+
+        System.out.println();
+        System.out.printf("Total Hand Value: %-19dTotal Hand Value: %d%n",
+            playerHand.getTotalValue(), houseHand.getTotalValue());
+        System.out.println();
+    }
+
+    
+
 
     private void playPowerUpsPhase(int housePointGoal) {
 
         if (rtx.isAONused()) return;
-        
-        //Allow player to choose and activate powerups, loop until player ends
+
+        // Allow player to choose and activate powerups, loop until player ends
         int choice = -1;
         while (true) {
 
-            //Show hands, available power-ups, power-up points
+            // Show hands, available power-ups, power-up points
             System.out.println();
-            Hand.printBothHands(playerHand, houseHand, rtx.isHouseActive(), housePointGoal);
-            gtx.printPwrUps();
+            printBothHands(housePointGoal);
+            printPowerUps();
 
-            choice = InputHelper.getValidatedInput(gtx.getScanner(), 0, gtx.powerUps.size(), 
-                                            "\nEnter a power-up number to play, or 0 to continue: ", 
-                                            "Enter a number between 0 and " + gtx.powerUps.size() + ".");
+            choice = InputHelper.getValidatedInput(gtx.getScanner(), 0, gtx.powerUps.size(),
+                    "\nEnter a power-up number to play, or 0 to continue: ",
+                    "Enter a number between 0 and " + gtx.powerUps.size() + ".");
+
             if (choice == 0) break;
 
-            PowerUp p = gtx.powerUps.get(choice - 1);
-            if (p.equals(PowerUp.all_or_nothing)) {
-                System.out.println("ERROR: All or Nothing cannot be played mid-round.");
-                continue;
-            }
-
-            System.out.println();
-            if (gtx.getPwrUpPts() >= p.getCost()) {
-                p.apply(gtx);
-                gtx.powerUps.remove(p);
-                gtx.setPwrUpPts(gtx.getPwrUpPts() - p.getCost());
-            }
-            else {
-                System.out.println("ERROR: You do not have enough Power-Up Points to play this power-up.");
+            // Handle invalid play (e.g. not enough points or trying to play AON)
+            switch (rtx.playPowerUp(choice, gtx, genv)) {
+                case 1: 
+                    break;
+                case 0:
+                    System.out.println("ERROR: Not enough Power-Up Points.");
+                    break;
+                case -1:
+                    System.out.println("ERROR: Cannot play All or Nothing mid-round.");
+                    break;
             }
         }
     }
 
 
 
-    public int determineWinner(Hand player, Hand house) {
-
+    public int determineWinner() {
         System.out.println("\n--------------------------------------------------------------------------------------------------\n");
 
-        int pv = player.getTotalValue();
-        int hv = house.getTotalValue();
-        int goal = rtx.getPointGoal();
+        RoundContext.RoundResult result = rtx.determineWinnerLogic();
+        System.out.println(result.message);
+        return result.result;
+    }
 
-        boolean playerBust = pv > goal;
-        boolean houseBust = hv > goal;
 
-        if (playerBust && houseBust) {
-            System.out.println("Both player and house busted!");
-            return 0;
-        }
-        if (playerBust) {
-            System.out.println("Player busts with " + pv + "! House wins.");
-            return -1;
-        }
-        if (houseBust) {
-            System.out.println("House busts with " + hv + "! Player wins.");
-            return 1;
-        }
 
-        //Neither bust
-        if (pv > hv) {
-            System.out.println("Player wins with " + pv + " against house's " + hv + "!");
-            return 1;
-        } else if (pv == hv) {
-            System.out.println("It's a tie at " + pv + "!");
-            return 0;
-        } else {
-            System.out.println("House wins with " + hv + " against player's " + pv + "!");
-            return -1;
-        }
+    public void printPowerUps() {
+        System.out.println("---------- POWER-UPS ----------");
+        for (int i = 0; i < gtx.powerUps.size(); i++)
+            System.out.println((i+1) + ") " + gtx.powerUps.get(i));
+        
+        System.out.println();
+        if (rtx.pocketUsed())
+            System.out.println("Card in Pocket: " + rtx.getPocket());
+        if(gtx.vaultUsed())
+            System.out.println("Card in Vault: " + gtx.getVault());
+        System.out.println("Power-Up Points: " + gtx.getPowerUpPts());
     }
 }

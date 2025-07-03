@@ -20,34 +20,8 @@ public class Hand {
 
     public int getTotalValue() {
         int total = 0;
-        for (Card c : hand) {
+        for (Card c : hand)
             total += c.getValue();
-        }
         return total;
     }
-    
-    public static void printBothHands(Hand player, Hand house, boolean houseActive, int housePointGoal) {
-        
-        System.out.println("--------------------------------------------------------------------------------------------------\n");
-        
-        if (!houseActive)
-            System.out.println("The house stands as the value of their hand has reached " + housePointGoal + " or higher.\n");
-
-        System.out.println("Player Hand:\t\t\t\tHouse Hand:");
-
-        int maxSize = Math.max(player.size(), house.size());
-        for (int i = 0; i < maxSize; i++) {
-            String playerCard = i < player.size() ? (i + 1) + ") " + player.getCard(i).toString() : "";
-            String houseCard = i < house.size() ? (i + 1) + ") " + house.getCard(i).toString() : "";
-            
-            //Adjust spacing based on longest possible card string to keep columns aligned
-            System.out.printf("%-40s%s%n", playerCard, houseCard);
-        }
-
-        System.out.println();
-        System.out.printf("Total Hand Value: %-19dTotal Hand Value: %d%n", 
-        player.getTotalValue(), house.getTotalValue());
-        System.out.println();
-    }   
-
 }

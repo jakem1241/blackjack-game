@@ -7,41 +7,18 @@ public enum PowerUp {
     /*  LIST OF POWER-UPS   */
     
 
-    // draw_two("Draw Two", "Draw two cards from the deck", Rarity.COMMON) {
-    //     @Override
-    //     public void apply(GameContext gtx) {
-    //         Deck d = deck(gtx);
-    //         Hand h = hand(gtx);
-
-    //         if (d.size() < 2) {
-    //             System.out.println("Not enough cards in the deck.");
-    //             return;
-    //         }
-    //         Card c1 = d.draw();
-    //         h.addCard(c1);
-    //         Card c2 = d.draw();
-    //         h.addCard(c2);
-
-    //         System.out.println("Drew " + c1 + " and " + c2 + ".");
-    //     }
-
-    //     @Override
-    //     public boolean isValid(GameContext gtx) {
-    //         return true;
-    //     }
-    // },
-
     burn_top("Burn Top Card", "Burns the top card from the deck", Rarity.COMMON) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Deck d = deck(gtx);
+
             if (d.isEmpty()) {
-                System.out.println("Not enough cards in the deck.");
+                genv.showMessage("Not enough cards in the deck.");
                 return;
             }
 
             Card burned = d.draw();
-            System.out.println("Burned the card " + burned + ".");
+            genv.showMessage("Burned the card " + burned + ".");
         }
 
         @Override
@@ -52,28 +29,28 @@ public enum PowerUp {
 
     pick_two("Pick Two", "Choose one of the top two drawn cards to keep", Rarity.COMMON) {
         @Override
-        public void apply(GameContext gtx) {
-            Card c1, c2;
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Deck d = deck(gtx);
 
             if (d.size() < 2) {
-                System.out.println("Not enough cards in the deck.");
+                genv.showMessage("Not enough cards in the deck.");
                 return;
             }
 
-            c1 = d.draw();
-            c2 = d.draw();
+            Card c1 = d.draw();
+            Card c2 = d.draw();
 
-            int choice = InputHelper.getValidatedInput(gtx.getScanner(), 1, 2, 
-                        "Keep 1) " + c1 + " or 2) " + c2 + "? ", 
-             "Enter only 1 or 2.");
-            if (choice == 1) {
-                System.out.println("Kept " + c1 + ".");
-                hand(gtx).addCard(c1);
-            } else {
-                System.out.println("Kept " + c2 + ".");
-                hand(gtx).addCard(c2);
-            }
+            PowerUpAction pua = new PowerUpAction(
+                "Pick Two: Choose one of the top two drawn cards to keep",
+                new String[]{c1.toString(), c2.toString()}
+            );
+
+            int choice = pua.execute(genv);
+
+            Card chosen = (choice == 0) ? c1 : c2;
+            hand(gtx).addCard(chosen);
+
+            genv.showMessage("Kept " + chosen + ".");
         }
 
         @Override
@@ -82,32 +59,34 @@ public enum PowerUp {
         }
     },
 
+
     pick_three("Pick Three", "Choose one of the top three drawn cards to keep", Rarity.RARE) {
         @Override
-        public void apply(GameContext gtx) {
-            Card c1, c2, c3;
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Deck d = deck(gtx);
 
             if (d.size() < 3) {
-                System.out.println("Not enough cards in the deck.");
+                genv.showMessage("Not enough cards in the deck.");
                 return;
             }
 
-            c1 = d.draw();
-            c2 = d.draw();
-            c3 = d.draw();
+            Card c1 = d.draw();
+            Card c2 = d.draw();
+            Card c3 = d.draw();
 
-            int choice = InputHelper.getValidatedInput(gtx.getScanner(), 1, 3, 
-                    "Keep 1) " + c1 + ", 2) " + c2 + " or 3) " + c3 + "? ", 
-                    "Enter only 1, 2, or 3.");
-            if (choice == 1) {
-                System.out.println("Kept " + c1 + ".");
+            String prompt = "Keep one of the following cards:";
+            String[] options = new String[] { c1.toString(), c2.toString(), c3.toString() };
+
+            int choice = new PowerUpAction(prompt, options).execute(genv);
+
+            if (choice == 0) {
+                genv.showMessage("Kept " + c1 + ".");
                 hand(gtx).addCard(c1);
-            } else if (choice == 2) {
-                System.out.println("Kept " + c2 + ".");
+            } else if (choice == 1) {
+                genv.showMessage("Kept " + c2 + ".");
                 hand(gtx).addCard(c2);
             } else {
-                System.out.println("Kept " + c3 + ".");
+                genv.showMessage("Kept " + c3 + ".");
                 hand(gtx).addCard(c3);
             }
         }
@@ -118,20 +97,23 @@ public enum PowerUp {
         }
     },
 
+
     double_value("Double Value", "Doubles the value of your most recent card", Rarity.COMMON) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Hand h = hand(gtx);
 
             if (h.isEmpty()) {
-                System.out.println("Hand is empty.");
+                genv.showMessage("Hand is empty.");
                 return;
             }
+
             Card c = h.getCard(0);
 
             int oldVal = c.getValue();
             c.setValue(oldVal * 2);
-            System.out.println("Doubled the value of " + c + " from " + oldVal + " to " + c.getValue() + ".");
+
+            genv.showMessage("Doubled the value of " + c + " from " + oldVal + " to " + c.getValue() + ".");
         }
 
         @Override
@@ -142,10 +124,10 @@ public enum PowerUp {
 
     half_hand("Half Hand Total", "Halves the value of all cards in your hand", Rarity.LEGENDARY) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Hand h = hand(gtx);
             if (h.isEmpty()) {
-                System.out.println("Hand is empty.");
+                genv.showMessage("Hand is empty.");
                 return;
             }
 
@@ -154,7 +136,7 @@ public enum PowerUp {
                 c.setValue(c.getValue() / 2);
             }
 
-            System.out.println("Total hand value changed from " + prevTotal + " to " + h.getTotalValue() + ".");
+            genv.showMessage("Total hand value changed from " + prevTotal + " to " + h.getTotalValue() + ".");
         }
 
         @Override
@@ -163,15 +145,16 @@ public enum PowerUp {
         }
     },
 
+
     peek("Peek", "View the top card of the deck", Rarity.RARE) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Deck d = deck(gtx);
             if (d.isEmpty()) {
-                System.out.println("Deck is empty.");
+                genv.showMessage("Deck is empty.");
                 return;
             }
-            System.out.println("The next card is " + d.peek() + ".");
+            genv.showMessage("The next card is " + d.peek() + ".");
         }
 
         @Override
@@ -182,16 +165,16 @@ public enum PowerUp {
 
     future_peek("Future Peek", "Randomly reveals one of the next two cards in the deck", Rarity.COMMON) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Deck d = deck(gtx);
 
             if (d.size() < 2) {
-                System.out.println("Not enough cards in the deck");
+                genv.showMessage("Not enough cards in the deck.");
                 return;
             }
 
             Random random = gtx.getRandom();
-            System.out.println("One of the next 2 cards is " + d.peekAtIndex(random.nextInt(2)) + ".");
+            genv.showMessage("One of the next 2 cards is " + d.peekAtIndex(random.nextInt(2)) + ".");
         }
 
         @Override
@@ -202,17 +185,18 @@ public enum PowerUp {
 
     omni_peek("Omni-Peek", "Reveal the next five cards in the deck", Rarity.LEGENDARY) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Deck d = deck(gtx);
 
             if (d.size() < 5) {
-                System.out.println("Not enough cards in the deck.");
+                genv.showMessage("Not enough cards in the deck.");
                 return;
             }
 
-            System.out.println("The next 5 cards are: ");
-            for (int i = 0; i < 5; i++)
-                System.out.println(d.peekAtIndex(i));
+            genv.showMessage("The next 5 cards are:");
+            for (int i = 0; i < 5; i++) {
+                genv.showMessage(d.peekAtIndex(i).toString());
+            }
         }
 
         @Override
@@ -223,27 +207,33 @@ public enum PowerUp {
 
     slash_val("Slash Value", "Reduce the value of a card to a random lower number", Rarity.RARE) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Hand h = hand(gtx);
             if (h.isEmpty()) {
-                System.out.println("Hand is empty.");
+                genv.showMessage("Hand is empty.");
                 return;
             }
 
-            int num = InputHelper.getValidatedInput(gtx.getScanner(), 1, h.size(), 
-                    "Which card to slash? ", 
-                    "There are only " + h.size() + " items in your hand.");
-            Card c = h.getCard(num-1);
+            int num = InputHelper.getValidatedInput(
+                gtx.getScanner(),
+                1, h.size(),
+                "Which card to slash? ",
+                "There are only " + h.size() + " items in your hand."
+            );
+
+            Card c = h.getCard(num - 1);
             int originalValue = c.getValue();
+
             if (originalValue <= 1) {
-                System.out.println("Card is already at minimum slashable value.");
+                genv.showMessage("Card is already at minimum slashable value.");
                 return;
             }
 
             Random random = gtx.getRandom();
-            int newVal = random.nextInt(originalValue-1)+1;
+            int newVal = random.nextInt(originalValue - 1) + 1;
             c.setValue(newVal);
-            System.out.println("Slashed " + c + "'s value from " + originalValue + " to " + newVal + ".");
+
+            genv.showMessage("Slashed " + c + "'s value from " + originalValue + " to " + newVal + ".");
         }
 
         @Override
@@ -254,19 +244,23 @@ public enum PowerUp {
 
     turn_two("Turn to Two", "Change a selected card's value to two", Rarity.LEGENDARY) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Hand h = hand(gtx);
             if (h.isEmpty()) {
-                System.out.println("Hand is empty.");
+                genv.showMessage("Hand is empty.");
                 return;
             }
 
-            int num = InputHelper.getValidatedInput(gtx.getScanner(), 1, h.size(), 
-                    "Which card to Turn to Two? ", 
-                    "There are only " + h.size() + " items in your hand.");
-            Card c = h.getCard(num-1);
+            int num = InputHelper.getValidatedInput(
+                gtx.getScanner(),
+                1, h.size(),
+                "Which card to Turn to Two? ",
+                "There are only " + h.size() + " items in your hand."
+            );
+
+            Card c = h.getCard(num - 1);
             c.setValue(2);
-            System.out.println("The value of " + c + " has been Turned to Two.");
+            genv.showMessage("The value of " + c + " has been Turned to Two.");
         }
 
         @Override
@@ -275,25 +269,34 @@ public enum PowerUp {
         }
     },
 
+
     re_insert("Re-Insert", "Return the top card in your hand to one of the top four spots in the deck", Rarity.RARE) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Hand h = hand(gtx);
             Deck d = deck(gtx);
+
             if (h.isEmpty()) {
-                System.out.println("Hand is empty.");
+                genv.showMessage("Hand is empty.");
                 return;
             }
             if (d.size() < 4) {
-                System.out.println("Not enough cards in deck.");
+                genv.showMessage("Not enough cards in deck.");
                 return;
             }
 
             Card c = h.getCard(0);
             h.removeCard(c);
-            Random random = gtx.getRandom();
-            d.addToIndex(c, random.nextInt(4));
-            System.out.println(c + " added to one of the top four positions in the deck.");
+
+            PowerUpAction action = new PowerUpAction(
+                "Choose a position (1-4) to return " + c + " to the top of the deck:",
+                new String[] {"Position 1", "Position 2", "Position 3", "Position 4"}
+            );
+
+            int pos = action.execute(genv);
+            d.addToIndex(c, pos - 1);
+
+            genv.showMessage(c + " added to position " + pos + " in the top four cards of the deck.");
         }
 
         @Override
@@ -304,9 +307,9 @@ public enum PowerUp {
 
     reshuffle("Reshuffle", "Shuffle the remaining deck", Rarity.COMMON) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             deck(gtx).shuffle();
-            System.out.println("Deck reshuffled.");
+            genv.showMessage("Deck reshuffled.");
         }
 
         @Override
@@ -315,29 +318,29 @@ public enum PowerUp {
         }
     },
 
-
-
-
     swap("Swap", "Swap a random card from hand with one from the deck", Rarity.COMMON) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Hand h = hand(gtx);
             Deck d = deck(gtx);
+
             if (h.isEmpty()) {
-                System.out.println("Hand is empty.");
+                genv.showMessage("Hand is empty.");
                 return;
             }
             if (d.isEmpty()) {
-                System.out.println("Deck is empty.");
+                genv.showMessage("Deck is empty.");
                 return;
             }
 
             Random random = gtx.getRandom();
             Card c = h.getCard(random.nextInt(h.size()));
             h.removeCard(c);
+
             Card drawn = d.draw();
             h.addCard(drawn);
-            System.out.println("Lost " + c + " and drew " + drawn + " from the deck.");
+
+            genv.showMessage("Lost " + c + " and drew " + drawn + " from the deck.");
         }
 
         @Override
@@ -348,27 +351,33 @@ public enum PowerUp {
 
     pick_swap("Pick-Swap", "Choose which card to swap from hand with deck", Rarity.RARE) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Hand h = hand(gtx);
             Deck d = deck(gtx);
+
             if (h.isEmpty()) {
-                System.out.println("Hand is empty.");
+                genv.showMessage("Hand is empty.");
                 return;
             }
             if (d.isEmpty()) {
-                System.out.println("Deck is empty.");
+                genv.showMessage("Deck is empty.");
                 return;
             }
 
-            int num = InputHelper.getValidatedInput(gtx.getScanner(), 1, h.size(), 
-                    "Which card to lose? ", 
-                    "There are only " + h.size() + " items in your hand.");
+            int choice = InputHelper.getValidatedInput(
+                gtx.getScanner(), 
+                1, h.size(),
+                "Which card to lose? ", 
+                "There are only " + h.size() + " cards in your hand."
+            );
 
-            Card c = h.getCard(num - 1);
+            Card c = h.getCard(choice - 1);
             h.removeCard(c);
+
             Card drawn = d.draw();
             h.addCard(drawn);
-            System.out.println("Lost " + c + " and drew " + drawn + " from the deck.");
+
+            genv.showMessage("Lost " + c + " and drew " + drawn + " from the deck.");
         }
 
         @Override
@@ -378,53 +387,61 @@ public enum PowerUp {
     },
 
     sabotage("Sabotage", "Lose a card and steal one from the house's hand", Rarity.LEGENDARY) {
-        @Override
-        public void apply(GameContext gtx) {
-            Hand h = hand(gtx);
-            Hand houseHand = rtx(gtx).getHouseHand();
-            Deck d = deck(gtx);
-            if (h.isEmpty()) {
-                System.out.println("Hand is empty.");
-                return;
-            }
-            if (houseHand.isEmpty()) {
-                System.out.println("House's hand is empty.");
-                return;
-            }
-            if (d.isEmpty()) {
-                System.out.println("Deck is empty.");
-                return;
-            }
+    @Override
+    public void apply(GameContext gtx, GameEnvironment genv) {
+        Hand h = hand(gtx);
+        Hand houseHand = rtx(gtx).getHouseHand();
+        Deck d = deck(gtx);
 
-            int num = InputHelper.getValidatedInput(gtx.getScanner(), 1, h.size(), 
-                    "Which card to lose? ", 
-                    "There are only " + h.size() + " items in your hand.");
-            Card c = h.getCard(num - 1);
-            h.removeCard(c);
-
-            int houseNum = InputHelper.getValidatedInput(gtx.getScanner(), 1, houseHand.size(), 
-                    "Which card to take from the house? ", 
-                    "There are only " + houseHand.size() + " items in the house's hand.");
-            Card houseCard = houseHand.getCard(houseNum - 1);
-            houseHand.removeCard(houseCard);
-            h.addCard(houseCard);
-
-            System.out.println("Lost " + c + " and took " + houseCard + " from the house.");
+        if (h.isEmpty()) {
+            genv.showMessage("Hand is empty.");
+            return;
+        }
+        if (houseHand.isEmpty()) {
+            genv.showMessage("House's hand is empty.");
+            return;
+        }
+        if (d.isEmpty()) {
+            genv.showMessage("Deck is empty.");
+            return;
         }
 
-        @Override
-        public boolean isValid(GameContext gtx) {
-            return true;
-        }
-    },
+        int loseChoice = InputHelper.getValidatedInput(
+            gtx.getScanner(), 1, h.size(),
+            "Which card to lose? ", 
+            "There are only " + h.size() + " cards in your hand."
+        );
+        Card lostCard = h.getCard(loseChoice - 1);
+        h.removeCard(lostCard);
+
+        int stealChoice = InputHelper.getValidatedInput(
+            gtx.getScanner(), 1, houseHand.size(),
+            "Which card to take from the house? ",
+            "There are only " + houseHand.size() + " cards in the house's hand."
+        );
+        Card stolenCard = houseHand.getCard(stealChoice - 1);
+        houseHand.removeCard(stolenCard);
+
+        h.addCard(stolenCard);
+
+        genv.showMessage("Lost " + lostCard + " and took " + stolenCard + " from the house.");
+    }
+
+    @Override
+    public boolean isValid(GameContext gtx) {
+        return true;
+    }
+},
 
     house_gamble("House Gamble", "Swap entire hand with the house's hand; hand value must be less than the house's standing point", Rarity.LEGENDARY) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Hand h = hand(gtx);
             Hand houseHand = rtx(gtx).getHouseHand();
-            if (h.getTotalValue() > rtx(gtx).getPointGoal() - 4) {
-                System.out.println("Hand's value is greater than the standing points, cannot swap.");
+            int pointGoal = rtx(gtx).getPointGoal();
+
+            if (h.getTotalValue() > pointGoal - 4) {
+                genv.showMessage("Hand's value is greater than the standing points, cannot swap.");
                 return;
             }
 
@@ -433,7 +450,7 @@ public enum PowerUp {
             h.setHand(houseHand.getHand());
             houseHand.setHand(temp);
 
-            System.out.println("Swapped hands with the house.");
+            genv.showMessage("Swapped hands with the house.");
         }
 
         @Override
@@ -442,15 +459,16 @@ public enum PowerUp {
         }
     },
 
-    double_bjk("Double Blackjack", "Double the point goal for the game", Rarity.LEGENDARY) {
+   double_bjk("Double Blackjack", "Double the point goal for the game", Rarity.LEGENDARY) {
         @Override
-        public void apply(GameContext gtx) {
-            if (rtx(gtx).isDBJused()) {
-                System.out.println("Double Blackjack has already been used");
+        public void apply(GameContext gtx, GameEnvironment genv) {
+            RoundContext rtx = rtx(gtx);
+            if (rtx.isDBJused()) {
+                genv.showMessage("Double Blackjack has already been used");
                 return;
             }
-            rtx(gtx).useDBJ();
-            System.out.println("Point goal doubled!");
+            rtx.useDBJ();
+            genv.showMessage("Point goal doubled!");
         }
 
         @Override
@@ -459,14 +477,15 @@ public enum PowerUp {
         }
     },
 
+
     dump_hand("Dump Hand", "Discard entire hand immediately", Rarity.LEGENDARY) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Hand h = hand(gtx);
             int dumped = h.size();
 
             h.setHand(new ArrayList<>());
-            System.out.println("Hand dumped! You lost " + dumped + " cards.");
+            genv.showMessage("Hand dumped! You lost " + dumped + " cards.");
         }
 
         @Override
@@ -477,31 +496,34 @@ public enum PowerUp {
 
     backfire("Backfire", "Both player and house lose their highest-value card", Rarity.RARE) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Hand h = hand(gtx);
             Hand houseHand = rtx(gtx).getHouseHand();
+
             if (h.isEmpty()) {
-                System.out.println("Hand is empty.");
+                genv.showMessage("Hand is empty.");
                 return;
             }
             if (houseHand.isEmpty()) {
-                System.out.println("House's hand is empty.");
+                genv.showMessage("House's hand is empty.");
                 return;
             }
 
-            Card handHighest = h.getHand().get(0), houseHighest = houseHand.getHand().get(0);
+            Card handHighest = h.getHand().get(0);
+            Card houseHighest = houseHand.getHand().get(0);
 
-            for (Card c : h.getHand())
-                if (c.getValue() > handHighest.getValue())
-                    handHighest = c;
-            for (Card c : houseHand.getHand())
-                if (c.getValue() > houseHighest.getValue())
-                    houseHighest = c;
+            for (Card c : h.getHand()) {
+                if (c.getValue() > handHighest.getValue()) handHighest = c;
+            }
+            for (Card c : houseHand.getHand()) {
+                if (c.getValue() > houseHighest.getValue()) houseHighest = c;
+            }
 
             h.removeCard(handHighest);
             houseHand.removeCard(houseHighest);
-            System.out.println("You lost " + handHighest + " of value " + handHighest.getValue() + 
-                               " and the house lost " + houseHighest + " of value " + houseHighest.getValue() + ".");
+
+            genv.showMessage("You lost " + handHighest + " of value " + handHighest.getValue() + 
+                            " and the house lost " + houseHighest + " of value " + houseHighest.getValue() + ".");
         }
 
         @Override
@@ -510,59 +532,62 @@ public enum PowerUp {
         }
     },
 
-    pocket("Pocket", "Store a card from hand into pocket", Rarity.COMMON) {
-        @Override
-        public void apply(GameContext gtx) {
-            Hand h = hand(gtx);
-            if (h.isEmpty()) {
-                System.out.println("Hand is empty.");
-                return;
-            }
 
-            int num = InputHelper.getValidatedInput(gtx.getScanner(), 1, h.size(), 
-                    "Which card to store? ", 
-                    "There are only " + h.size() + " items in your hand.");
-            Card c = h.getCard(num - 1);
-            rtx(gtx).setPocket(c);
-            h.removeCard(c);
-            gtx.powerUps.add(use_pocket);
+    // Pocket power-up removed! 
+    
+    // pocket("Pocket", "Store a card from hand into pocket", Rarity.COMMON) {
+    //     @Override
+    //     public void apply(GameContext gtx, GameEnvironment genv) {
+    //         Hand h = hand(gtx);
+    //         if (h.isEmpty()) {
+    //             System.out.println("Hand is empty.");
+    //             return;
+    //         }
 
-            System.out.println("Stored " + c + " in your pocket.");
-        }
+    //         int num = InputHelper.getValidatedInput(gtx.getScanner(), 1, h.size(), 
+    //                 "Which card to store? ", 
+    //                 "There are only " + h.size() + " items in your hand.");
+    //         Card c = h.getCard(num - 1);
+    //         rtx(gtx).setPocket(c);
+    //         h.removeCard(c);
+    //         gtx.powerUps.add(use_pocket);
 
-        @Override
-        public boolean isValid(GameContext gtx) {
-            return true;
-        }
-    },
+    //         System.out.println("Stored " + c + " in your pocket.");
+    //     }
 
-    use_pocket("Use Pocket", "Retrieve card from pocket back to hand", Rarity.COMMON) {
-        @Override
-        public void apply(GameContext gtx) {
-            Hand h = hand(gtx);
-            if (!rtx(gtx).pocketUsed()) {
-                System.out.println("Pocket is empty.");
-                return;
-            }
+    //     @Override
+    //     public boolean isValid(GameContext gtx) {
+    //         return true;
+    //     }
+    // },
 
-            Card c = rtx(gtx).getPocket();
-            h.addCard(c);
-            rtx(gtx).removeFromPocket();
-            System.out.println(c + " added to hand from pocket.");
-        }
+    // use_pocket("Use Pocket", "Retrieve card from pocket back to hand", Rarity.COMMON) {
+    //     @Override
+    //     public void apply(GameContext gtx, GameEnvironment genv) {
+    //         Hand h = hand(gtx);
+    //         if (!rtx(gtx).pocketUsed()) {
+    //             System.out.println("Pocket is empty.");
+    //             return;
+    //         }
 
-        @Override
-        public boolean isValid(GameContext gtx) {
-            return false;
-        }
-    },
+    //         Card c = rtx(gtx).getPocket();
+    //         h.addCard(c);
+    //         rtx(gtx).removeFromPocket();
+    //         System.out.println(c + " added to hand from pocket.");
+    //     }
+
+    //     @Override
+    //     public boolean isValid(GameContext gtx) {
+    //         return false;
+    //     }
+    // },
 
     vault("Vault", "Store a card from hand into the vault, lasting into new matches", Rarity.RARE) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Hand h = hand(gtx);
             if (h.isEmpty()) {
-                System.out.println("Hand is empty.");
+                genv.showMessage("Hand is empty.");
                 return;
             }
 
@@ -573,7 +598,7 @@ public enum PowerUp {
             gtx.setVault(c);
             h.removeCard(c);
 
-            System.out.println("Stored " + c + " in your vault.");
+            genv.showMessage("Stored " + c + " in your vault.");
         }
 
         @Override
@@ -584,17 +609,18 @@ public enum PowerUp {
 
     use_vault("Use Vault", "Retrieve card from vault back to hand", Rarity.COMMON) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Hand h = hand(gtx);
             if (!gtx.vaultUsed()) {
-                System.out.println("Vault is empty" + ".");
+                genv.showMessage("Vault is empty.");
                 return;
             }
 
             Card c = gtx.getVault();
             h.addCard(c);
             gtx.removeFromVault();
-            System.out.println(c + " added to hand from vault.");
+
+            genv.showMessage(c + " added to hand from vault.");
         }
 
         @Override
@@ -605,9 +631,10 @@ public enum PowerUp {
 
     bet_boost("Bet Boost", "Increase wager amount by a fixed amount of $100", Rarity.COMMON) {
         @Override
-        public void apply(GameContext gtx) {
-            rtx(gtx).setWager(rtx(gtx).getWager() + WAGER_BOOST);
-            System.out.println("Wager boosted by $" + WAGER_BOOST + ". Your wager is now $" + rtx(gtx).getWager() +".");
+        public void apply(GameContext gtx, GameEnvironment genv) {
+            RoundContext rtx = rtx(gtx);
+            rtx.setWager(rtx.getWager() + WAGER_BOOST);
+            genv.showMessage("Wager boosted by $" + WAGER_BOOST + ". Your wager is now $" + rtx.getWager() + ".");
         }
 
         @Override
@@ -617,25 +644,28 @@ public enum PowerUp {
     },
 
     losing_bet("Losing Bet", "Lose 1/4th of the wager to dump your hand", Rarity.RARE) {
-
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             Hand h = hand(gtx);
             int dumped = h.size();
 
-            rtx(gtx).setWager(rtx(gtx).getWager() * 3 / 4);
+            RoundContext rtx = rtx(gtx);
+            rtx.setWager(rtx.getWager() * 3 / 4);
             h.setHand(new ArrayList<>());
-            System.out.println("Hand reset! You lost " + dumped + " cards and the wager is now $" + rtx(gtx).getWager()+ ".");
+
+            genv.showMessage("Hand reset! You lost " + dumped + " cards and the wager is now $" + rtx.getWager() + ".");
         }
+
         @Override
         public boolean isValid(GameContext gtx) {
             return true;
         }
     },
 
+
     all_or_nothing("All or Nothing", "Wager all lives, double your lives if hand is won. Locks powerups!", Rarity.LEGENDARY) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             RoundContext rtx = rtx(gtx);
             rtx.useAON();
         }
@@ -646,12 +676,11 @@ public enum PowerUp {
         }
     },
 
-
     gain_life("Life Boost", "Gain a life", Rarity.LEGENDARY) {
         @Override
-        public void apply(GameContext gtx) {
+        public void apply(GameContext gtx, GameEnvironment genv) {
             gtx.setLives(gtx.getLives() + 1);
-            System.out.println("Gained a life! you now have " + gtx.getLives() + " lives.");
+            genv.showMessage("Gained a life! You now have " + gtx.getLives() + " lives.");
         }
 
         @Override
@@ -662,12 +691,11 @@ public enum PowerUp {
 
     double_jeopardy("Double Jeopardy", "Double your wager, but double the lives lost if hand is lost", Rarity.RARE) {
         @Override
-        public void apply(GameContext gtx) {
-            rtx(gtx).useDJ();
-
-            rtx(gtx).setWager(rtx(gtx).getWager() * 2);
-            System.out.println("Double Jeopardy activated! Your wager is now $" + rtx(gtx).getWager() + ", but you'll lose 2 lives if you lose this round.");
-
+        public void apply(GameContext gtx, GameEnvironment genv) {
+            RoundContext rtx = rtx(gtx);
+            rtx.useDJ();
+            rtx.setWager(rtx.getWager() * 2);
+            genv.showMessage("Double Jeopardy activated! Your wager is now $" + rtx.getWager() + ", but you'll lose 2 lives if you lose this round.");
         }
 
         @Override
@@ -676,18 +704,19 @@ public enum PowerUp {
         }
     },
 
-reset_powerups("Reset Powerups", "Trash all powerups, inlcuding this one; gain power-up points for each discarded", Rarity.RARE) {
-        @Override
-        public void apply(GameContext gtx) {
 
+    reset_powerups("Reset Powerups", "Trash all powerups, including this one; gain power-up points for each discarded", Rarity.RARE) {
+        @Override
+        public void apply(GameContext gtx, GameEnvironment genv) {
             int newPts = 0;
             ArrayList<PowerUp> pw = gtx.powerUps;
-            for(PowerUp p : pw)
+            for (PowerUp p : pw)
                 newPts += p.getCost();
             pw.clear();
-            gtx.setPwrUpPts(gtx.getPwrUpPts() + (newPts/2) + Rarity.RARE.getDefaultCost());
+            int addedPoints = (newPts / 2) + Rarity.RARE.getDefaultCost();
+            gtx.setPowerUpPts(gtx.getPowerUpPts() + addedPoints);
 
-            System.out.println("Removed all powerups! You gained " + newPts + " points for a new total of " + (gtx.getPwrUpPts()-Rarity.RARE.getDefaultCost()) + ".");
+            genv.showMessage("Removed all powerups! You gained " + newPts + " points for a new total of " + (gtx.getPowerUpPts() - Rarity.RARE.getDefaultCost()) + ".");
         }
 
         @Override
@@ -740,7 +769,7 @@ reset_powerups("Reset Powerups", "Trash all powerups, inlcuding this one; gain p
         this.cost = rarity.getDefaultCost();
     }
 
-    public abstract void apply(GameContext gtx);
+    public abstract void apply(GameContext gtx, GameEnvironment genv);
     public abstract boolean isValid(GameContext gtx);
 
     public String getName() { return name; }

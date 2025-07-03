@@ -1,6 +1,6 @@
 public class RoundContext {
 
-    private final int POINT_GOAL = 21;
+    private static final int POINT_GOAL = 21;
 
     private final Deck deck = new Deck();
     private final Hand playerHand = new Hand(), houseHand = new Hand();
@@ -9,6 +9,7 @@ public class RoundContext {
 
     private int wager = 0;
     private int pointGoal = POINT_GOAL;
+    private boolean playerActive = true, houseActive = true;
 
     private boolean usedDBJ = false;
     private boolean usedAON = false;
@@ -48,22 +49,84 @@ public class RoundContext {
     public void useDJ() { usedDJ = true; }
 
 
+
     /*  CHANGES FROM REFACTORING   */
 
 
+    
     public void drawPlayer() { playerHand.addCard(deck.draw()); }
     public void drawHouse() { houseHand.addCard(deck.draw()); }
 
+
+
     public void startRoundLogic(int wager, int playerLives) {
+        //All-or-Nothing wager
         if (wager == -1) { setWager(playerLives); } 
+        //Regular wager
         else { setWager(wager); }
     }
 
-    private boolean playerActive = true, houseActive = true;
 
+
+    public int playPowerUp(int index, GameContext gtx, GameEnvironment genv) {
+
+        PowerUp p = gtx.powerUps.get(index - 1);
+        if (p.equals(PowerUp.all_or_nothing)) { return -1; } //Logic rejects mid-round AON
+
+        if (gtx.getPowerUpPts() >= p.getCost()) {
+            p.apply(gtx, genv);
+            gtx.powerUps.remove(p);
+            gtx.setPowerUpPts(gtx.getPowerUpPts() - p.getCost());
+            return 1;
+        }
+
+        return 0; //Not enough points
+    }
+
+
+
+    public static class RoundResult {
+        public final int result; // 1 = player win, 0 = tie, -1 = house win
+        public final String message;
+
+        public RoundResult(int result, String message) {
+            this.result = result;
+            this.message = message;
+        }
+    }
+
+    public RoundResult determineWinnerLogic() {
+        int pv = playerHand.getTotalValue();
+        int hv = houseHand.getTotalValue();
+        int goal = pointGoal;
+
+        boolean playerBust = pv > goal;
+        boolean houseBust = hv > goal;
+
+        if (playerBust && houseBust) {
+            return new RoundResult(0, "Both player and house busted!");
+        }
+        if (playerBust) {
+            return new RoundResult(-1, "Player busts with " + pv + "! House wins.");
+        }
+        if (houseBust) {
+            return new RoundResult(1, "House busts with " + hv + "! Player wins.");
+        }
+
+        if (pv > hv) {
+            return new RoundResult(1, "Player wins with " + pv + " against house's " + hv + "!");
+        }
+        if (pv == hv) {
+            return new RoundResult(0, "It's a tie at " + pv + "!");
+        }
+        return new RoundResult(-1, "House wins with " + hv + " against player's " + pv + "!");
+    }
+
+    public boolean checkPlayerBust() { return playerHand.getTotalValue() > pointGoal; }
+    public boolean checkHouseBust() { return houseHand.getTotalValue() > pointGoal; }
     public void checkBusts() {
-        if (playerHand.getTotalValue() > pointGoal) playerActive = false;
-        if (houseHand.getTotalValue() > pointGoal) houseActive = false;
+        if (checkPlayerBust()) playerActive = false;
+        if (checkHouseBust()) houseActive = false;
     }
 
     public boolean shouldHouseDraw(int houseGoal) {
