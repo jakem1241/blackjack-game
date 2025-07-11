@@ -155,7 +155,7 @@ public class GameEnvironment {
             options.length,
             "Choose an option: ",
             "Please enter a number between 1 and " + options.length
-        ) - 1; //Convert to 0-based index
+        );
     }
 
     public void showMessage(String message) {

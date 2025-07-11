@@ -47,7 +47,7 @@ public enum PowerUp {
 
             int choice = pua.execute(genv);
 
-            Card chosen = (choice == 0) ? c1 : c2;
+            Card chosen = (choice == 1) ? c1 : c2;
             hand(gtx).addCard(chosen);
 
             genv.showMessage("Kept " + chosen + ".");
@@ -79,10 +79,10 @@ public enum PowerUp {
 
             int choice = new PowerUpAction(prompt, options).execute(genv);
 
-            if (choice == 0) {
+            if (choice == 1) {
                 genv.showMessage("Kept " + c1 + ".");
                 hand(gtx).addCard(c1);
-            } else if (choice == 1) {
+            } else if (choice == 2) {
                 genv.showMessage("Kept " + c2 + ".");
                 hand(gtx).addCard(c2);
             } else {

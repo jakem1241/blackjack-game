@@ -27,8 +27,8 @@ public class GameContext {
     }
 
 
-
     /*      GETTERS AND SETTERS        */
+
 
     public void initRound() { this.rtx = new RoundContext(); }
     public RoundContext getRoundContext() {return rtx; }
