@@ -4,11 +4,11 @@ This is a single-player Blackjack game written in Java, featuring unique gamepla
 
 ## Features
 
-- **Standard Blackjack gameplay** — hit, stand, bust (no push/tie resolution beyond declared tie).
-- **Custom Power-Up system** — unique effects like All or Nothing, Pick Two, Double Jeopardy.
-- **Vault system** — store cards persistently across rounds.
-- **Object-oriented design** — clear separation of game-wide state (GameContext), round-specific state (RoundContext), and game flow (GameEnvironment/RoundEnvironment).
-- **Refactored architecture** — logic is now decoupled from console input/output to prepare for GUI implementations (e.g., JavaFX).
+- **Standard Blackjack gameplay** - hit, stand, bust (no push/tie resolution beyond declared tie).
+- **Custom Power-Up system** - unique effects like All or Nothing, Pick Two, Double Jeopardy.
+- **Vault system** - store cards persistently across rounds.
+- **Object-oriented design** - clear separation of game-wide state (GameContext), round-specific state (RoundContext), and game flow (GameEnvironment/RoundEnvironment).
+- **Refactored architecture** - logic is now decoupled from console input/output to prepare for GUI implementations (e.g., JavaFX).
 
 ## Technical Details
 
@@ -31,7 +31,7 @@ Or simply run in your IDE of choice.
 
 ## Future Plans
 
-- JavaFX GUI — thanks to the refactored architecture, game logic can plug directly into a graphical interface without major rewrites.
+- JavaFX GUI - thanks to the refactored architecture, game logic can plug directly into a graphical interface without major rewrites.
 - Additional power-ups, card animations, and statistics tracking.
 
 Created by Charles (Jake) Matthews
